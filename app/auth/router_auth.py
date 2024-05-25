@@ -6,6 +6,9 @@ from ..db.database import SessionLocal
 from ..db.models import User
 from ..depends import get_db_session
 from .auth_user import UserUseCases
+from fastapi.security import OAuth2PasswordRequestForm
+from .schemas_auth import LoginSchema
+
 
 #cria router de user
 routerAuth = APIRouter(
@@ -24,4 +27,16 @@ def user_register(user: UserBase, db_session: Session = Depends(get_db_session))
         status_code=status.HTTP_201_CREATED
     )
 
-    
+@routerAuth.post("/login")
+def user_login(request_form_user: LoginSchema, db_session: Session = Depends(get_db_session)):
+    uc = UserUseCases(db_session=db_session)
+    user = UserBase(
+        usu_email=request_form_user.usu_email,
+        usu_senha=request_form_user.usu_senha
+    )
+    auth_data = uc.user_login(user=user)
+
+    return JSONResponse(
+        content=auth_data,
+        status_code=status.HTTP_200_OK
+    )

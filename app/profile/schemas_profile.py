@@ -12,4 +12,4 @@ class Profile(ProfileBase):
     per_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
