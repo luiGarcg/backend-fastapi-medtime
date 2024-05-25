@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator
 import re
 
-class AuthSignIn(BaseModel):
+class AuthSignUp(BaseModel):
     per_nome: str
     usu_email: str
     usu_senha: str

@@ -3,11 +3,12 @@ from jose import JWTError, jwt
 from sqlalchemy.exc import IntegrityError
 from fastapi import status
 from sqlalchemy.orm import Session
-from ..db.models import User
+from ..db.models import User,Profile 
 from ..user.schemas_user import UserBase
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
 from decouple import config
+from .schemas_auth import AuthSignUp
 
 SECRET_KEY=config('SECRET_KEY')
 ALGORITHM=config('ALGORITHM')
@@ -17,15 +18,25 @@ class UserUseCases:
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    def user_register(self, user: UserBase):
+    def user_register(self, user: AuthSignUp):
         user_model = User(
             usu_email= user.usu_email,
             usu_senha= crypt_context.hash(user.usu_senha)
         )
+
         try:
             self.db_session.add(user_model)
             self.db_session.commit()
+            self.db_session.refresh(user_model)
+            
+            profile_model = Profile(
+                per_nome=user.per_nome,
+                per_usuId=user_model.usu_id
+            )
+            self.db_session.add(profile_model)
+            self.db_session.commit()
         except IntegrityError:
+            self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='User already exists'

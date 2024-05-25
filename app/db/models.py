@@ -15,4 +15,4 @@ class Profile(Base):
     per_id = Column(Integer, primary_key=True, autoincrement=True)
     per_nome = Column(String, index=True)
     per_usuId = Column(Integer, index=True)
-    per_foto = Column(String, index=True)
+    per_foto = Column(String, index=True, default="/default.png")
