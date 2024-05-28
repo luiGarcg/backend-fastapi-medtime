@@ -1,17 +1,19 @@
 from fastapi import FastAPI
 from app.db.database import engine
 
-from app.profile import router_profile
-from app.user import router_user
-from app.auth import router_auth
+from .profile.router_profile import routerProfile
+from .user.router_user import routerUser
+from .auth.router_auth import  routerAuth, routerTest
 
 app = FastAPI()
 
 @app.get('/')
 def health_check():
-    return "it's working"
+    return "Tororo"
 
-app.include_router(router_user.routerUser)
-app.include_router(router_profile.routerProfile)
-app.include_router(router_auth.routerAuth)
+app.include_router(routerUser)
+app.include_router(routerProfile)
+app.include_router(routerAuth)
+app.include_router(routerTest)
+
 

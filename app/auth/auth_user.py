@@ -28,7 +28,7 @@ class UserUseCases:
             self.db_session.add(user_model)
             self.db_session.commit()
             self.db_session.refresh(user_model)
-            
+
             profile_model = Profile(
                 per_nome=user.per_nome,
                 per_usuId=user_model.usu_id
@@ -69,3 +69,20 @@ class UserUseCases:
             'access_token': access_token,
             'exp': exp.isoformat()
         }
+    
+    def verify_token(self, access_token):
+        try:
+            data = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Invalid access token'
+            )
+
+        user_on_db = self.db_session.query(User).filter_by(usu_email=data['sub']).first()
+
+        if user_on_db is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Invalid access token'
+            )
