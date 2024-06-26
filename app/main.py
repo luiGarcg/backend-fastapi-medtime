@@ -7,9 +7,10 @@ from .auth.router_auth import  routerAuth, routerTest
 
 app = FastAPI()
 
-@app.get('/')
+
+@app.get('/arduino')
 def health_check():
-    return "Tororo"
+    return True
 
 app.include_router(routerUser)
 app.include_router(routerProfile)

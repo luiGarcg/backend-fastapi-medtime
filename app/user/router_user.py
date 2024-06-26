@@ -25,4 +25,3 @@ def get_user(usu_id: int, db: Session = Depends(get_db_session)):
     if db_item is None:
         raise HTTPException(status_code=404, detail="user not found")
     return db_item
-
