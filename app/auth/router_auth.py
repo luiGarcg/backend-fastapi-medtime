@@ -16,11 +16,6 @@ routerAuth = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Cria router de test
-routerTest = APIRouter(
-    prefix='/test', 
-)
-
 # Função para verificar se o email já está registrado
 def is_email_registered(db_session: Session, email: str) -> bool:
     user_on_db = db_session.query(User).filter_by(usu_email=email).first()
@@ -49,21 +44,3 @@ def user_login(request_form_user: LoginSchema, db_session: Session = Depends(get
         content=auth_data,
         status_code=status.HTTP_200_OK
     )
-
-@routerTest.post("/test")
-def test_user_verify(token: Optional[str] = None, db_session: Session = Depends(get_db_session)):
-    if token is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Token is required'
-        )
-
-    user_use_case = UserUseCases(db_session)
-    try:
-        user_use_case.verify_token(token)
-        return {"message": "Token is valid"}
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid token'
-        )

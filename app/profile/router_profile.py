@@ -4,7 +4,6 @@ from typing import List
 
 from . import crud_profile, schemas_profile
 from app.db.database import SessionLocal
-from ..auth.authentication import get_current_user
 
 # Cria router de perfil
 routerProfile = APIRouter(
@@ -26,7 +25,6 @@ def create_profile(
     usu_id: int,
     profile: schemas_profile.ProfileBase,
     db: Session = Depends(get_db_session),
-    current_user: str = Depends(get_current_user)  
 ):
     return crud_profile.create_profile(db=db, profile=profile, usu_id=usu_id)
 
@@ -35,7 +33,6 @@ def alter_profile_name(
     per_id: int,
     profile: schemas_profile.ProfileBase,
     db: Session = Depends(get_db_session),
-    current_user: str = Depends(get_current_user)
 ):
     return crud_profile.alter_profile_name(db=db, profile=profile,per_id=per_id)
 
@@ -44,7 +41,6 @@ def alter_profile_image(
     per_id: int,
     profile: schemas_profile.ProfileUpdateImage,
     db: Session = Depends(get_db_session),
-    current_user: str = Depends(get_current_user)
 ):
     return crud_profile.alter_profile_image(db=db, profile=profile,per_id=per_id)
 
@@ -52,7 +48,6 @@ def alter_profile_image(
 def get_profiles_perUsuId(
     per_usuId: int,
     db: Session = Depends(get_db_session),
-    current_user: str = Depends(get_current_user)  # Dependência para obter o usuário atual
 ):
     db_profiles = crud_profile.get_profiles_perUsuId(db=db, per_usuId=per_usuId)
     if not db_profiles:
@@ -63,6 +58,5 @@ def get_profiles_perUsuId(
 def delete_profile(
     per_id: int,
     db: Session = Depends(get_db_session),
-    current_user: str = Depends(get_current_user)  # Dependência para obter o usuário atual
 ):
     return crud_profile.delete_profile(db=db, per_id=per_id)

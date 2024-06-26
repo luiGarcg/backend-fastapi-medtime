@@ -10,9 +10,6 @@ from ..db.models import User, Profile
 from ..user.schemas_user import UserBase
 from .schemas_auth import AuthSignUp
 
-SECRET_KEY = config('SECRET_KEY')
-ALGORITHM = config('ALGORITHM')
-
 class UserUseCases:
     def __init__(self, db_session: Session):
         self.db_session = db_session
@@ -58,7 +55,7 @@ class UserUseCases:
                 detail='Internal server error'
             ) from e
 
-    def user_login(self, user: UserBase, expires_in: int = 30) -> dict:
+    def user_login(self, user: UserBase) -> dict:
         user_on_db = self.db_session.query(User).filter_by(usu_email=user.usu_email).first()
 
         if user_on_db is None or not self.crypt_context.verify(user.usu_senha, user_on_db.usu_senha):
@@ -67,36 +64,6 @@ class UserUseCases:
                 detail='Email or password is invalid'
             )
 
-        exp = datetime.now(timezone.utc) + timedelta(minutes=expires_in)
-
-        payload = {
-            'sub': user.usu_email,
-            'exp': exp,
-        }
-
-        access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
         return {
-            'access_token': access_token,
             'email': user.usu_email,
-
         }
-
-    def verify_token(self, access_token: str):
-        try:
-            data = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        except JWTError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid access token'
-            )
-
-        user_on_db = self.db_session.query(User).filter_by(usu_email=data['sub']).first()
-
-        if user_on_db is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid access token'
-            )
-
-        return user_on_db
