@@ -1,15 +1,15 @@
 # schemas_profile.py
 from pydantic import BaseModel
+from datetime import time
 
-class ProfileBase(BaseModel):
-    per_nome: str
+class TimeBase(BaseModel):
+    hor_horario: time
 
-class ProfileUpdateImage(BaseModel):
-    per_foto:str
-    
 # Para uso interno e evitar confusão, renomeamos a classe Pydantic para ProfileInDB
-class ProfileInDB(ProfileBase):
-    per_id: int
+class TimeInDB(TimeBase):
+    hor_id: int
+    hor_horario: time
+
 
     class Config:
         from_attributes = True

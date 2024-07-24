@@ -44,7 +44,7 @@ def alter_profile_image(
 ):
     return crud_profile.alter_profile_image(db=db, profile=profile,per_id=per_id)
 
-@routerProfile.get("/{per_usuId}", response_model=List[schemas_profile.Profile])
+@routerProfile.get("/{per_usuId}", response_model=List[schemas_profile.ProfileInDB])
 def get_profiles_perUsuId(
     per_usuId: int,
     db: Session = Depends(get_db_session),
