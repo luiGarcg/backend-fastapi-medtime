@@ -17,14 +17,14 @@ class Profile(Base):
     per_usuId = Column(Integer, index=True)
     per_foto = Column(String, index=True, default="/default.png")
 
-class Time(Base):
+class time(Base):
     __tablename__ = "tbl_horario"
 
     hor_id = Column(Integer, primary_key=True, autoincrement=True)
     hor_horario = Column(Time, nullable=False) 
     hor_medicacao = Column(Integer, nullable=False)
 
-class Monitoring(Base):
+class monitoring(Base):
     __tablename__ = "tbl_monitoramento"
 
     mon_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,7 +32,7 @@ class Monitoring(Base):
     mon_perfilId = Column(Integer, nullable=False) #CE
     mon_dataHorario = Column(DateTime, nullable=False)
 
-class Confirmation(Base):
+class confirmation(Base):
     __tablename__ = "tbl_confirmacao"
 
     con_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -40,7 +40,7 @@ class Confirmation(Base):
     con_horarioId = Column(Integer, nullable=False) #CE
     con_dataHorario = Column(DateTime, nullable=False)
 
-class Medication(Base):
+class medication(Base):
     __tablename__ = "tbl_medicacao"
 
     med_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -53,7 +53,7 @@ class Medication(Base):
     med_perfilId = Column(Integer, nullable=False) #CE
     med_estado = Column(Boolean, nullable=False)
 
-class Symptoms(Base):
+class symptoms(Base):
     __tablename__ = "tbl_sintomas"
 
     sin_id = Column(Integer, primary_key=True, autoincrement=True)
