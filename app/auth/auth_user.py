@@ -1,16 +1,21 @@
-from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, status
-from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from decouple import config
-
+from ..db.models import User, Profile
+from ..user.schemas_user import UserBase
+from .schemas_auth import AuthSignUp
+<<<<<<< HEAD
+from aiocache import cached, Cache
+from app.config import cache
+=======
 from ..db.models import User, Profile
 from ..user.schemas_user import UserBase
 from .schemas_auth import AuthSignUp
 from aiocache import cached, Cache
 from app.config import cache
+
+>>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
 
 class UserUseCases:
     def __init__(self, db_session: Session):

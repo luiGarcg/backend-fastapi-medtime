@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from fastapi import HTTPException
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -5,6 +6,14 @@ from . import schema_time
 from ..db.models import Confirmation, Time, Medication, User, Profile
 from firebase_admin import messaging
 
+=======
+from fastapi import HTTPException # type: ignore
+from datetime import datetime
+from sqlalchemy.orm import Session # type: ignore
+from . import schema_time
+from ..db.models import Time, Medication, Profile, Confirmation
+from typing import List, Dict
+>>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
 
 def get_time(db: Session, hor_id:int):
     return db.query(Time).filter(Time.hor_id == hor_id).first()
@@ -23,6 +32,7 @@ def create_time(db: Session, time: schema_time.TimeBase, med_id: int):
     db.refresh(db_time)
     return db_time
 
+<<<<<<< HEAD
 def send_notification(token: str, title: str, body: str, data: dict):
     message = messaging.Message(
         notification=messaging.Notification(
@@ -108,6 +118,38 @@ def get_time_by_currentTime(db: Session, usu_id: int):
                     matching_times.append({
                         "hor_id": time.hor_id,
                         "hor_horario": time.hor_horario
+=======
+
+def get_time_by_currentTime(db: Session, usu_id: int) -> List[Dict]:
+    user = db.query(Profile).filter(Profile.per_usuId == usu_id).all()
+    if not user:
+        return []
+
+    matching_times = []
+
+    for users in user:
+        profiles = db.query(Medication).filter(Medication.med_perfilId == users.per_id).all()
+        current_time = datetime.now().time()
+        current_date = datetime.now().date()
+
+        for profile in profiles:
+            # Supondo que a data relevante esteja armazenada como `med_data` no modelo Medication
+            medication_date = profile.med_dataFinal  # Substitua pelo nome correto do campo de data no modelo Medication
+            
+            # Verifica se a data do medicamento já passou
+            if current_date > medication_date:
+                continue
+
+            times = db.query(Time).filter(Time.hor_medicacao == profile.med_id).all()
+
+            for time in times:
+                if time.hor_horario.strftime('%H:%M') == current_time.strftime('%H:%M'):
+                    matching_times.append({
+                        "hor_id": time.hor_id,
+                        "hor_horario": time.hor_horario,
+                        "med_id": time.hor_medicacao,
+                        "per_id": users.per_id
+>>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
                     })
 
     return matching_times

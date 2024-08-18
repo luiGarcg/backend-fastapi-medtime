@@ -9,11 +9,15 @@ from .time.crud_time import get_time_by_currentTime
 from app.db.database import SessionLocal
 import asyncio
 from app.config import cache
+<<<<<<< HEAD
 import firebase_admin
 from firebase_admin import credentials
 
 cred = credentials.Certificate('app/credencial.json')
 firebase_admin.initialize_app(cred)
+=======
+
+>>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
 
 app = FastAPI()
 
