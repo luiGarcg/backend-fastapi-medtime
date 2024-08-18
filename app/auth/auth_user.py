@@ -9,6 +9,8 @@ from decouple import config
 from ..db.models import User, Profile
 from ..user.schemas_user import UserBase
 from .schemas_auth import AuthSignUp
+from aiocache import cached, Cache
+from app.config import cache
 
 class UserUseCases:
     def __init__(self, db_session: Session):
@@ -19,7 +21,6 @@ class UserUseCases:
         return self.db_session.query(User).filter(User.usu_email == email).first() is not None
 
     def user_register(self, user: AuthSignUp):
-        # Verifica se o email já está registrado
         if self.is_email_registered(user.usu_email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -28,7 +29,8 @@ class UserUseCases:
 
         user_model = User(
             usu_email=user.usu_email,
-            usu_senha=self.crypt_context.hash(user.usu_senha)
+            usu_senha=self.crypt_context.hash(user.usu_senha),
+            fcm_token=user.fcm_token
         )
 
         try:
@@ -55,7 +57,7 @@ class UserUseCases:
                 detail='Internal server error'
             ) from e
 
-    def user_login(self, user: UserBase) -> dict:
+    async def user_login(self, user: UserBase) -> dict:
         user_on_db = self.db_session.query(User).filter_by(usu_email=user.usu_email).first()
 
         if user_on_db is None or not self.crypt_context.verify(user.usu_senha, user_on_db.usu_senha):
@@ -63,7 +65,11 @@ class UserUseCases:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='Email or password is invalid'
             )
+        
+        # Armazena o user_id no cache
+        await cache.set("global_user_id", user_on_db.usu_id)
 
         return {
-            'email': user.usu_email,
+            'id': user_on_db.usu_id,
+            'email': user_on_db.usu_email,
         }

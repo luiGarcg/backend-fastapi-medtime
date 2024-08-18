@@ -5,6 +5,7 @@ class AuthSignUp(BaseModel):
     per_nome: str
     usu_email: str
     usu_senha: str
+    fcm_token: str 
 
 class LoginSchema(BaseModel):
     usu_email: str
