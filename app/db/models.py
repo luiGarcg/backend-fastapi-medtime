@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Time, Boolean
+from sqlalchemy import Column, Integer, String, Date, DateTime, Time, Boolean # type: ignore
 
 from ..db.database import Base
 
@@ -17,14 +17,14 @@ class Profile(Base):
     per_usuId = Column(Integer, index=True)
     per_foto = Column(String, index=True, default="/default.png")
 
-class time(Base):
+class Time(Base):
     __tablename__ = "tbl_horario"
 
     hor_id = Column(Integer, primary_key=True, autoincrement=True)
     hor_horario = Column(Time, nullable=False) 
     hor_medicacao = Column(Integer, nullable=False)
 
-class monitoring(Base):
+class Monitoring(Base):
     __tablename__ = "tbl_monitoramento"
 
     mon_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,7 +32,7 @@ class monitoring(Base):
     mon_perfilId = Column(Integer, nullable=False) #CE
     mon_dataHorario = Column(DateTime, nullable=False)
 
-class confirmation(Base):
+class Confirmation(Base):
     __tablename__ = "tbl_confirmacao"
 
     con_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -40,7 +40,7 @@ class confirmation(Base):
     con_horarioId = Column(Integer, nullable=False) #CE
     con_dataHorario = Column(DateTime, nullable=False)
 
-class medication(Base):
+class Medication(Base):
     __tablename__ = "tbl_medicacao"
 
     med_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -53,7 +53,7 @@ class medication(Base):
     med_perfilId = Column(Integer, nullable=False) #CE
     med_estado = Column(Boolean, nullable=False)
 
-class symptoms(Base):
+class Symptoms(Base):
     __tablename__ = "tbl_sintomas"
 
     sin_id = Column(Integer, primary_key=True, autoincrement=True)

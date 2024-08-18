@@ -1,5 +1,5 @@
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from fastapi import HTTPException # type: ignore
+from sqlalchemy.orm import Session # type: ignore
 from . import schemas_profile
 from ..db.models import Profile, User
 
@@ -49,3 +49,4 @@ def delete_profile(db: Session, per_id: int):
         return {"message": "Profile deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Profile not found")
+    

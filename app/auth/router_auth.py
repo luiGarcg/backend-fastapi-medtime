@@ -32,13 +32,13 @@ def user_register(user: AuthSignUp, db_session: Session = Depends(get_db_session
     )
 
 @routerAuth.post("/login")
-def user_login(request_form_user: LoginSchema, db_session: Session = Depends(get_db_session)):
+async def user_login(request_form_user: LoginSchema, db_session: Session = Depends(get_db_session)):
     uc = UserUseCases(db_session=db_session)
     user = UserBase(
         usu_email=request_form_user.usu_email,
         usu_senha=request_form_user.usu_senha
     )
-    auth_data = uc.user_login(user=user)
+    auth_data = await  uc.user_login(user=user)
 
     return JSONResponse(
         content=auth_data,
