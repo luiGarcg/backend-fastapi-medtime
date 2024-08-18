@@ -20,6 +20,7 @@ class ConfirmationBase(BaseModel):
 class ConfirmationEdit(BaseModel):
     con_medicacaoId:int
     con_horarioId:int
+    con_perfilId: int
     
 # Para uso interno e evitar confusão, renomeamos a classe Pydantic para ProfileInDB
 class ConfirmationInDB(ConfirmationBase):

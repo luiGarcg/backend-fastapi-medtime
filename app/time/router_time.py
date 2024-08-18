@@ -24,7 +24,6 @@ routerConfirmation = APIRouter(
 @routerTime.post("/{med_id}", response_model=schema_time.TimeInDB)
 def create_time(
     med_id: int,
-    current_user: str,
     time: schema_time.TimeBase,
     db: Session = Depends(get_db_session),
 ):
@@ -33,7 +32,6 @@ def create_time(
 @routerTime.get("/{hor_id}", response_model=schema_time.TimeBase)
 def get_time(
     hor_id: int,
-    current_user: str,
     db: Session = Depends(get_db_session),  
 ):
     db_time = crud_time.get_time(db=db, hor_id=hor_id)
@@ -44,7 +42,6 @@ def get_time(
 @routerConfirmation.post("/{clickNotification}", response_model=schema_time.ConfirmationEdit)
 def confirm_notification(
     clickNotification: bool,
-    current_user: str,
     confirmation: schema_time.ConfirmationEdit,
     db: Session = Depends(get_db_session),  
 ):

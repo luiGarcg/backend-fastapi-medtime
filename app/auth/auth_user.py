@@ -5,17 +5,14 @@ from sqlalchemy.orm import Session
 from ..db.models import User, Profile
 from ..user.schemas_user import UserBase
 from .schemas_auth import AuthSignUp
-<<<<<<< HEAD
 from aiocache import cached, Cache
 from app.config import cache
-=======
 from ..db.models import User, Profile
 from ..user.schemas_user import UserBase
 from .schemas_auth import AuthSignUp
 from aiocache import cached, Cache
 from app.config import cache
 
->>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
 
 class UserUseCases:
     def __init__(self, db_session: Session):
@@ -25,18 +22,21 @@ class UserUseCases:
     def is_email_registered(self, email: str) -> bool:
         return self.db_session.query(User).filter(User.usu_email == email).first() is not None
 
-    def user_register(self, user: AuthSignUp):
+    async def user_register(self, user: AuthSignUp):
         if self.is_email_registered(user.usu_email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Email already registered'
             )
 
+
         user_model = User(
             usu_email=user.usu_email,
             usu_senha=self.crypt_context.hash(user.usu_senha),
             fcm_token=user.fcm_token
         )
+
+        await cache.set("global_token", user.fcm_token)
 
         try:
             self.db_session.add(user_model)

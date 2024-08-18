@@ -39,7 +39,9 @@ class Confirmation(Base):
     con_id = Column(Integer, primary_key=True, autoincrement=True)
     con_medicacaoId = Column(Integer, nullable=False) #CE
     con_horarioId = Column(Integer, nullable=False) #CE
+    con_perfilId = Column(Integer, nullable=False) #CE
     con_dataHorario = Column(DateTime, nullable=False)
+    con_confirmado = Column(Boolean, nullable=False, default=False)
 
 class Medication(Base):
     __tablename__ = "tbl_medicacao"

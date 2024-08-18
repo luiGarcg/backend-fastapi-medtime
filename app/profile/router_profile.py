@@ -17,7 +17,6 @@ routerProfile = APIRouter(
 @routerProfile.post("/{usu_id}", response_model=schemas_profile.ProfileBase)
 def create_profile(
     usu_id: int,
-    current_user: str,
     profile: schemas_profile.ProfileBase,
     db: Session = Depends(get_db_session),
 
@@ -27,7 +26,6 @@ def create_profile(
 @routerProfile.patch("/alterName/{per_id}", response_model=schemas_profile.ProfileBase)
 def alter_profile_name(
     per_id: int,
-    current_user: str,
     profile: schemas_profile.ProfileBase,
     db: Session = Depends(get_db_session),  
 ):
@@ -36,7 +34,6 @@ def alter_profile_name(
 @routerProfile.patch("/alterImage/{per_id}", response_model=schemas_profile.ProfileUpdateImage)
 def alter_profile_image(
     per_id: int,
-    current_user: str,
     profile: schemas_profile.ProfileUpdateImage,
     db: Session = Depends(get_db_session),  
 ):
@@ -45,7 +42,6 @@ def alter_profile_image(
 @routerProfile.get("/{per_usuId}", response_model=List[schemas_profile.ProfileInDB])
 def get_profiles_perUsuId(
     per_usuId: int,
-    current_user: str,
     db: Session = Depends(get_db_session),
 
 ):
@@ -57,7 +53,6 @@ def get_profiles_perUsuId(
 @routerProfile.delete("/{per_id}", response_model=dict)
 def delete_profile(
     per_id: int,
-    current_user: str,
     db: Session = Depends(get_db_session),
   
 

@@ -1,19 +1,10 @@
-<<<<<<< HEAD
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from . import schema_time
 from ..db.models import Confirmation, Time, Medication, User, Profile
 from firebase_admin import messaging
-
-=======
-from fastapi import HTTPException # type: ignore
-from datetime import datetime
-from sqlalchemy.orm import Session # type: ignore
-from . import schema_time
-from ..db.models import Time, Medication, Profile, Confirmation
-from typing import List, Dict
->>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
+import time
 
 def get_time(db: Session, hor_id:int):
     return db.query(Time).filter(Time.hor_id == hor_id).first()
@@ -32,7 +23,6 @@ def create_time(db: Session, time: schema_time.TimeBase, med_id: int):
     db.refresh(db_time)
     return db_time
 
-<<<<<<< HEAD
 def send_notification(token: str, title: str, body: str, data: dict):
     message = messaging.Message(
         notification=messaging.Notification(
@@ -53,18 +43,19 @@ def get_time_by_currentTime(db: Session, usu_id: int):
     user = db.query(Profile).filter(Profile.per_usuId == usu_id).all()
     if not user:
         return []
-    
+
     matching_times = []
 
-    for users in user:        
+    for users in user:
         medications = db.query(Medication).filter(Medication.med_perfilId == users.per_id).all()
-        current_time = datetime.now().time().strftime('%H:%M')
-        current_date = datetime.now().date()
+        current_datetime = datetime.now()
+        current_time = current_datetime.time().strftime('%H:%M')
+        current_date = current_datetime.date()
         print(f"Current time: {current_time}")
 
         for medication in medications:
-            medication_date = medication.med_dataFinal 
-            
+            medication_date = medication.med_dataFinal
+
             if current_date > medication_date:
                 continue
 
@@ -72,11 +63,11 @@ def get_time_by_currentTime(db: Session, usu_id: int):
 
             times = db.query(Time).filter(Time.hor_medicacao == medication.med_id).all()
 
-            for time in times:
-                print(f"Checking time: {time.hor_horario.strftime('%H:%M')}")
+            for time_entry in times:
+                print(f"Checking time: {time_entry.hor_horario.strftime('%H:%M')}")
 
-                if time.hor_horario.strftime('%H:%M') == current_time:
-                    print(f"Match found for time: {time.hor_horario.strftime('%H:%M')}")
+                if time_entry.hor_horario.strftime('%H:%M') == current_time:
+                    print(f"Match found for time: {time_entry.hor_horario.strftime('%H:%M')}")
 
                     profile_entry = db.query(Profile).filter(Profile.per_id == medication.med_perfilId).first()
                     if profile_entry:
@@ -97,12 +88,24 @@ def get_time_by_currentTime(db: Session, usu_id: int):
                     if fcm_token:
                         try:
                             data_payload = {
-                                'hor_id': str(time.hor_id),
-                                'horario': time.hor_horario.strftime('%H:%M'),
+                                'hor_id': str(time_entry.hor_id),
+                                'horario': time_entry.hor_horario.strftime('%H:%M'),
                                 'perfil_id': str(profile_entry.per_id),
                                 'med_id': str(medication.med_id),
-                                'med_nome': str(medication.med_nome),
+                                'med_nome': str(medication.med_nome)
                             }
+
+                            db_confirmation = Confirmation(
+                                con_medicacaoId=medication.med_id,
+                                con_horarioId=time_entry.hor_id,
+                                con_perfilId=profile_entry.per_id,
+                                con_dataHorario=current_datetime,  # Use datetime
+                                con_confirmado=False
+                            )
+                            db.add(db_confirmation)
+                            db.commit()
+                            db.refresh(db_confirmation)
+                            
                             send_notification(
                                 token=fcm_token,
                                 title="Hora de tomar o medicamento!",
@@ -110,58 +113,38 @@ def get_time_by_currentTime(db: Session, usu_id: int):
                                 data=data_payload 
                             )
                             print("Notification sent successfully")
+
+                            while not db_confirmation.con_confirmado:
+                                time.sleep(60)  # Aguarde 1 minuto antes de enviar novamente
+                                send_notification(
+                                    token=fcm_token,
+                                    title="Lembrete: Tome o medicamento!",
+                                    body=f"Por favor, confirme que você tomou o medicamento {medication.med_nome}.",
+                                    data=data_payload 
+                                )
+                                # Atualize a confirmação do banco de dados
+                                db_confirmation = db.query(Confirmation).filter(Confirmation.con_id == db_confirmation.con_id).first()
                         except Exception as e:
                             print(f"Error sending notification: {e}")
                     else:
                         print("FCM Token is None")
                 
                     matching_times.append({
-                        "hor_id": time.hor_id,
-                        "hor_horario": time.hor_horario
-=======
-
-def get_time_by_currentTime(db: Session, usu_id: int) -> List[Dict]:
-    user = db.query(Profile).filter(Profile.per_usuId == usu_id).all()
-    if not user:
-        return []
-
-    matching_times = []
-
-    for users in user:
-        profiles = db.query(Medication).filter(Medication.med_perfilId == users.per_id).all()
-        current_time = datetime.now().time()
-        current_date = datetime.now().date()
-
-        for profile in profiles:
-            # Supondo que a data relevante esteja armazenada como `med_data` no modelo Medication
-            medication_date = profile.med_dataFinal  # Substitua pelo nome correto do campo de data no modelo Medication
-            
-            # Verifica se a data do medicamento já passou
-            if current_date > medication_date:
-                continue
-
-            times = db.query(Time).filter(Time.hor_medicacao == profile.med_id).all()
-
-            for time in times:
-                if time.hor_horario.strftime('%H:%M') == current_time.strftime('%H:%M'):
-                    matching_times.append({
-                        "hor_id": time.hor_id,
-                        "hor_horario": time.hor_horario,
-                        "med_id": time.hor_medicacao,
-                        "per_id": users.per_id
->>>>>>> 89bf920552f3e2683429789acf52bc38fb4683be
+                        "hor_id": time_entry.hor_id,
+                        "hor_horario": time_entry.hor_horario
                     })
 
     return matching_times
 
-def confirm_notification(db: Session, clickNotification: bool, confirmation: schema_time.ConfirmationEdit):
-    medication = db.query(Medication).filter(Medication.med_id == confirmation.con_medicacaoId).first()
-    time = db.query(Time).filter(Time.hor_id == confirmation.con_horarioId).first()
-    current_time = datetime.now()
+def confirm_notification(db: Session, con_id:int):
+    confirmation = db.query(Confirmation).filter(Confirmation.con_id == con_id).first()
 
-    if clickNotification:
-        db_confirmation = Confirmation(con_medicacaoId=medication.med_id, con_horarioId = time.hor_id, con_dataHorario = current_time)
-        db.add(db_confirmation)
+    if confirmation and not confirmation.con_confirmado:
+        confirmation.con_confirmado = True
+        confirmation.con_dataHorarioConfirmacao = datetime.now().time().strftime('%H:%M')
         db.commit()
-        db.refresh(db_confirmation)
-        return db_confirmation
+        db.refresh(confirmation)
+        return confirmation       
+    else:
+        print("Confirmation not found or already confirmed.")
+        return None
