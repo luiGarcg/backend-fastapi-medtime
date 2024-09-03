@@ -23,7 +23,7 @@ def is_email_registered(db_session: Session, email: str) -> bool:
 
 # Faz o post em tbl_usuario pela função create_user de crud
 @routerAuth.post("/register")
-async def user_register(user: AuthSignUp, db_session: Session = Depends(get_db_session)):
+def user_register(user: AuthSignUp, db_session: Session = Depends(get_db_session)):
     uc = UserUseCases(db_session=db_session)
     uc.user_register(user=user)
     return JSONResponse(

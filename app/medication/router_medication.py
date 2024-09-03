@@ -32,3 +32,12 @@ def get_medication(
         raise HTTPException(status_code=404, detail="Medication not found")
     
     return db_medication
+
+@routerMedication.delete("/{med_id}", response_model=dict)
+def delete_medication(
+    med_id: int,
+    db: Session = Depends(get_db_session),
+  
+
+):
+    return crud_medication.delete_medication(db=db, med_id=med_id)

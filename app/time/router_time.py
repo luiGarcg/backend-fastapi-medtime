@@ -39,10 +39,13 @@ def get_time(
         raise HTTPException(status_code=404, detail="time not found")
     return db_time
 
-@routerConfirmation.post("/{clickNotification}", response_model=schema_time.ConfirmationEdit)
+@routerConfirmation.post("/{con_id}", response_model=schema_time.ConfirmationEdit)
 def confirm_notification(
-    clickNotification: bool,
-    confirmation: schema_time.ConfirmationEdit,
-    db: Session = Depends(get_db_session),  
+    con_id: int,
+    db: Session = Depends(get_db_session)
 ):
-    return crud_time.confirm_notification(db=db, clickNotification=clickNotification, confirmation=confirmation)
+    result = crud_time.confirm_notification(db=db, con_id=con_id)
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail="Failed to confirm notification.")

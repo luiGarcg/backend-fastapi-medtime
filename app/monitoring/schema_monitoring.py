@@ -10,9 +10,6 @@ class MonitoringEdit(MonitoringBase):
     mon_sintomasId: int
     mon_perfilId: int
 
-
-class MonitoringInDB(MonitoringBase):
-    mon_id: int
-
     class Config:
+        orm_mode = True
         from_attributes = True

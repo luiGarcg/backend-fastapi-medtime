@@ -1,3 +1,5 @@
+import asyncio
+import threading
 from fastapi import HTTPException
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -37,21 +39,55 @@ def send_notification(token: str, title: str, body: str, data: dict):
         response = messaging.send(message)
         print(f"Successfully sent message: {response}")
     except Exception as e:
+        # Logar o erro para análise futura
         print(f"Error sending message: {e}")
 
-def get_time_by_currentTime(db: Session, usu_id: int):
+async def send_reminder_notification(create_new_db_session, fcm_token: str, medication, time_entry, profile_entry, data_payload):
+    while True:
+        # Cria uma nova sessão para evitar problemas de concorrência
+        db = create_new_db_session()
+        try:
+            # Recarregar a confirmação a cada iteração para garantir que ela esteja conectada à sessão correta
+            confirmation = db.query(Confirmation).filter(
+                Confirmation.con_perfilId == profile_entry.per_id,
+                Confirmation.con_medicacaoId == medication.med_id,
+                Confirmation.con_horarioId == time_entry.hor_id
+            ).first()
+
+            # Se a confirmação foi feita, interrompe o loop e sai da função
+            if confirmation and confirmation.con_confirmado:
+                print(f"Confirmation already done for con_id: {confirmation.con_id}")
+                break  # Interrompe o loop
+
+            # Envia a notificação antes de dormir, garantindo que ela só seja enviada se a confirmação não for feita
+            send_notification(
+                token=fcm_token,
+                title="Lembrete: Tome o medicamento!",
+                body=f"Por favor, confirme que você tomou o medicamento {medication.med_nome}.",
+                data=data_payload 
+            )
+
+        except Exception as e:
+            # Logar o erro
+            print(f"Error in reminder notification loop: {e}")
+        finally:
+            # Fechar a sessão após cada iteração
+            db.close()
+
+        await asyncio.sleep(60)  # Aguarda 1 minuto após o envio da notificação
+
+async def get_time_by_currentTime(db: Session, create_new_db_session, usu_id: int):
     user = db.query(Profile).filter(Profile.per_usuId == usu_id).all()
     if not user:
         return []
 
     matching_times = []
+    current_datetime = datetime.now()
+    current_time = current_datetime.time().strftime('%H:%M')
+    current_date = current_datetime.date()
 
     for users in user:
         medications = db.query(Medication).filter(Medication.med_perfilId == users.per_id).all()
-        current_datetime = datetime.now()
-        current_time = current_datetime.time().strftime('%H:%M')
-        current_date = current_datetime.date()
-        print(f"Current time: {current_time}")
 
         for medication in medications:
             medication_date = medication.med_dataFinal
@@ -59,76 +95,55 @@ def get_time_by_currentTime(db: Session, usu_id: int):
             if current_date > medication_date:
                 continue
 
-            print(f"Checking medication: {medication.med_id}")
-
             times = db.query(Time).filter(Time.hor_medicacao == medication.med_id).all()
 
             for time_entry in times:
-                print(f"Checking time: {time_entry.hor_horario.strftime('%H:%M')}")
-
                 if time_entry.hor_horario.strftime('%H:%M') == current_time:
-                    print(f"Match found for time: {time_entry.hor_horario.strftime('%H:%M')}")
-
                     profile_entry = db.query(Profile).filter(Profile.per_id == medication.med_perfilId).first()
-                    if profile_entry:
-                        print(f"Profile found: {profile_entry.per_id}")
-
-                        user = db.query(User).filter(User.usu_id == profile_entry.per_usuId).first()
-                        if user:
-                            print(f"User found: {user.usu_id}")
-                            fcm_token = user.fcm_token
-                            print(f"FCM Token: {fcm_token}")
-                        else:
-                            fcm_token = None
-                            print("User not found for profile")
-                    else:
-                        fcm_token = None
-                        print("Profile not found for medication")
+                    user = db.query(User).filter(User.usu_id == profile_entry.per_usuId).first()
+                    fcm_token = user.fcm_token if user else None
 
                     if fcm_token:
                         try:
+                            # Criação da confirmação no instante atual
+                            db_confirmation = Confirmation(
+                                con_medicacaoId=medication.med_id,
+                                con_horarioId=time_entry.hor_id,
+                                con_perfilId=profile_entry.per_id,
+                                con_dataHorario=current_datetime,
+                                con_confirmado=False
+                            )
+
+                            db.add(db_confirmation)
+                            db.commit()
+                            db.refresh(db_confirmation)
+
                             data_payload = {
                                 'hor_id': str(time_entry.hor_id),
                                 'horario': time_entry.hor_horario.strftime('%H:%M'),
                                 'perfil_id': str(profile_entry.per_id),
                                 'med_id': str(medication.med_id),
-                                'med_nome': str(medication.med_nome)
+                                'med_nome': str(medication.med_nome),
+                                'con_id': str(db_confirmation.con_id)
                             }
 
-                            db_confirmation = Confirmation(
-                                con_medicacaoId=medication.med_id,
-                                con_horarioId=time_entry.hor_id,
-                                con_perfilId=profile_entry.per_id,
-                                con_dataHorario=current_datetime,  # Use datetime
-                                con_confirmado=False
-                            )
-                            db.add(db_confirmation)
-                            db.commit()
-                            db.refresh(db_confirmation)
-                            
+                            # Envio da notificação inicial
                             send_notification(
                                 token=fcm_token,
                                 title="Hora de tomar o medicamento!",
                                 body=f"É hora de tomar o medicamento {medication.med_nome}.",
                                 data=data_payload 
                             )
-                            print("Notification sent successfully")
 
-                            while not db_confirmation.con_confirmado:
-                                time.sleep(60)  # Aguarde 1 minuto antes de enviar novamente
-                                send_notification(
-                                    token=fcm_token,
-                                    title="Lembrete: Tome o medicamento!",
-                                    body=f"Por favor, confirme que você tomou o medicamento {medication.med_nome}.",
-                                    data=data_payload 
-                                )
-                                # Atualize a confirmação do banco de dados
-                                db_confirmation = db.query(Confirmation).filter(Confirmation.con_id == db_confirmation.con_id).first()
+                            # Inicia a tarefa assíncrona para enviar lembretes em segundo plano
+                            asyncio.create_task(send_reminder_notification(
+                                create_new_db_session, fcm_token, medication, time_entry, profile_entry, data_payload
+                            ))
+
                         except Exception as e:
+                            # Logar o erro
                             print(f"Error sending notification: {e}")
-                    else:
-                        print("FCM Token is None")
-                
+
                     matching_times.append({
                         "hor_id": time_entry.hor_id,
                         "hor_horario": time_entry.hor_horario
@@ -136,12 +151,13 @@ def get_time_by_currentTime(db: Session, usu_id: int):
 
     return matching_times
 
-def confirm_notification(db: Session, con_id:int):
+def confirm_notification(db: Session, con_id: int):
     confirmation = db.query(Confirmation).filter(Confirmation.con_id == con_id).first()
 
     if confirmation and not confirmation.con_confirmado:
         confirmation.con_confirmado = True
-        confirmation.con_dataHorarioConfirmacao = datetime.now().time().strftime('%H:%M')
+        # Usar datetime completo em vez de apenas o horário
+        confirmation.con_dataHorarioConfirmacao = datetime.now()
         db.commit()
         db.refresh(confirmation)
         return confirmation       
