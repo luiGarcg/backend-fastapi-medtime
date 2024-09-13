@@ -48,6 +48,7 @@ def create_medication(db: Session, medication: schema_medication.MedicationBase,
 
 def delete_medication(db: Session, med_id: int):
     db_profile = db.query(Medication).filter(Medication.med_id == med_id).first()
+    
     if db_profile:
         db.delete(db_profile)
         db.commit()

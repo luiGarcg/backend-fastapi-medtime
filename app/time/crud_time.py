@@ -44,22 +44,25 @@ def send_notification(token: str, title: str, body: str, data: dict):
 
 async def send_reminder_notification(create_new_db_session, fcm_token: str, medication, time_entry, profile_entry, data_payload):
     while True:
-        # Cria uma nova sessão para evitar problemas de concorrência
         db = create_new_db_session()
+
         try:
-            # Recarregar a confirmação a cada iteração para garantir que ela esteja conectada à sessão correta
+            medication_on_db = db.query(Medication).filter(Medication.med_id == medication.med_id).first()
+
+            if medication_on_db is None:
+                print(f"Medication with med_id {medication.med_id} not found in the database.")
+                break
+
             confirmation = db.query(Confirmation).filter(
                 Confirmation.con_perfilId == profile_entry.per_id,
                 Confirmation.con_medicacaoId == medication.med_id,
                 Confirmation.con_horarioId == time_entry.hor_id
             ).first()
 
-            # Se a confirmação foi feita, interrompe o loop e sai da função
             if confirmation and confirmation.con_confirmado:
                 print(f"Confirmation already done for con_id: {confirmation.con_id}")
-                break  # Interrompe o loop
-
-            # Envia a notificação antes de dormir, garantindo que ela só seja enviada se a confirmação não for feita
+                break
+            
             send_notification(
                 token=fcm_token,
                 title="Lembrete: Tome o medicamento!",
@@ -68,13 +71,11 @@ async def send_reminder_notification(create_new_db_session, fcm_token: str, medi
             )
 
         except Exception as e:
-            # Logar o erro
             print(f"Error in reminder notification loop: {e}")
         finally:
-            # Fechar a sessão após cada iteração
             db.close()
 
-        await asyncio.sleep(60)  # Aguarda 1 minuto após o envio da notificação
+        await asyncio.sleep(60)
 
 async def get_time_by_currentTime(db: Session, create_new_db_session, usu_id: int):
     user = db.query(Profile).filter(Profile.per_usuId == usu_id).all()
@@ -128,12 +129,14 @@ async def get_time_by_currentTime(db: Session, create_new_db_session, usu_id: in
                             }
 
                             # Envio da notificação inicial
-                            send_notification(
-                                token=fcm_token,
-                                title="Hora de tomar o medicamento!",
-                                body=f"É hora de tomar o medicamento {medication.med_nome}.",
-                                data=data_payload 
-                            )
+                            if medication.med_id:
+                                send_notification(
+                                    token=fcm_token,
+                                    title="Hora de tomar o medicamento!",
+                                    body=f"É hora de tomar o medicamento {medication.med_nome}.",
+                                    data=data_payload 
+                                )
+
 
                             # Inicia a tarefa assíncrona para enviar lembretes em segundo plano
                             asyncio.create_task(send_reminder_notification(
